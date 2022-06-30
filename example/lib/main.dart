@@ -17,29 +17,27 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _hasPermissions = false;
-  CompassEvent? _lastRead;
-  DateTime? _lastReadAt;
 
   @override
   void initState() {
     super.initState();
-
     _fetchPermissionStatus();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          title: const Text('Flutter Compass'),
+          title: const Text('iPhone设备朝向'),
         ),
         body: Builder(builder: (context) {
           if (_hasPermissions) {
             return Column(
               children: <Widget>[
-                _buildManualReader(),
+                ShowResultWidget(),
                 Expanded(child: _buildCompass()),
               ],
             );
@@ -47,44 +45,6 @@ class _MyAppState extends State<MyApp> {
             return _buildPermissionSheet();
           }
         }),
-      ),
-    );
-  }
-
-  Widget _buildManualReader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: <Widget>[
-          ElevatedButton(
-            child: Text('Read Value'),
-            onPressed: () async {
-              final CompassEvent tmp = await FlutterCompass.events!.first;
-              setState(() {
-                _lastRead = tmp;
-                _lastReadAt = DateTime.now();
-              });
-            },
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    '$_lastRead',
-                    style: Theme.of(context).textTheme.caption,
-                  ),
-                  Text(
-                    '$_lastReadAt',
-                    style: Theme.of(context).textTheme.caption,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -141,7 +101,7 @@ class _MyAppState extends State<MyApp> {
           ElevatedButton(
             child: Text('Request Permissions'),
             onPressed: () {
-              Permission.locationWhenInUse.request().then((ignored) {
+              Permission.locationWhenInUse.request().then((value) {
                 _fetchPermissionStatus();
               });
             },
@@ -149,11 +109,7 @@ class _MyAppState extends State<MyApp> {
           SizedBox(height: 16),
           ElevatedButton(
             child: Text('Open App Settings'),
-            onPressed: () {
-              openAppSettings().then((opened) {
-                //
-              });
-            },
+            onPressed: () {},
           )
         ],
       ),
@@ -166,5 +122,71 @@ class _MyAppState extends State<MyApp> {
         setState(() => _hasPermissions = status == PermissionStatus.granted);
       }
     });
+  }
+}
+
+class ShowResultWidget extends StatefulWidget {
+  const ShowResultWidget({Key? key}) : super(key: key);
+
+  @override
+  State<ShowResultWidget> createState() => _ShowResultWidgetState();
+}
+
+class _ShowResultWidgetState extends State<ShowResultWidget> {
+  CompassEvent? _lastRead;
+  DateTime? _lastReadAt;
+
+  @override
+  void initState() {
+    super.initState();
+    FlutterCompass.events?.listen((event) {
+      setState(() {
+        _lastRead = event;
+        _lastReadAt = DateTime.now();
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildManualReader();
+  }
+
+  Widget _buildManualReader() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: <Widget>[
+          ElevatedButton(
+            child: Text('读取值'),
+            onPressed: () async {
+              final CompassEvent tmp = await FlutterCompass.events!.first;
+              setState(() {
+                _lastRead = tmp;
+                _lastReadAt = DateTime.now();
+              });
+            },
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    '$_lastRead',
+                    style: Theme.of(context).textTheme.caption,
+                  ),
+                  Text(
+                    '$_lastReadAt',
+                    style: Theme.of(context).textTheme.caption,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
