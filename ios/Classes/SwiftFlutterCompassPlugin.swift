@@ -54,7 +54,9 @@ public class SwiftFlutterCompassPlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
     public func onCancel(withArguments arguments: Any?) -> FlutterError? {
         eventSink = nil
-        location.stopUpdatingHeading()
+        if CLLocationManager.headingAvailable() {
+            location.stopUpdatingHeading()
+        }
         location.stopUpdatingLocation()
         return nil
     }
