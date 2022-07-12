@@ -26,19 +26,24 @@ public class SwiftFlutterCompassPlugin: NSObject, FlutterPlugin, FlutterStreamHa
     private var latitudeDMS: String = ""
     private var longitudeDMS: String = ""
     
-    init(channel: FlutterEventChannel) {
+    init(registrar: FlutterPluginRegistrar) {
         super.init()
         location.delegate = self
         location.headingFilter = 1
         location.desiredAccuracy = kCLLocationAccuracyBest
         motion.deviceMotionUpdateInterval = 1.0 / 30.0
         motion.startDeviceMotionUpdates(using: CMAttitudeReferenceFrame.xMagneticNorthZVertical)
-        channel.setStreamHandler(self)
+        
+        let SCREEN_ORIENTATION_CHANNEL_NAME = "soer/screen_orientation"
+        let screenOrientationChannel = FlutterEventChannel(name: SCREEN_ORIENTATION_CHANNEL_NAME, binaryMessenger: registrar.messenger())
+        screenOrientationChannel.setStreamHandler(ScreenOrientationStreamHandler())
+        
     }
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterEventChannel(name: "soer/flutter_compass", binaryMessenger: registrar.messenger())
-        _ = SwiftFlutterCompassPlugin(channel: channel)
+        let instance = SwiftFlutterCompassPlugin(registrar: registrar)
+        channel.setStreamHandler(instance)
     }
 
     public func onListen(withArguments arguments: Any?,
@@ -213,5 +218,39 @@ extension BinaryFloatingPoint {
         let degrees = seconds / 3600
         seconds = abs(seconds % 3600)
         return (degrees, seconds / 60, seconds % 60)
+    }
+}
+
+
+class ScreenOrientationStreamHandler: NSObject, FlutterStreamHandler {
+    private var eventSink:  FlutterEventSink?
+
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        eventSink = events
+        NotificationCenter.default.addObserver(self, selector: #selector(orientationChanged), name: UIDevice.orientationDidChangeNotification, object: nil)
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        orientationChanged()
+        return nil
+    }
+    
+    func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        UIDevice.current.endGeneratingDeviceOrientationNotifications()
+        NotificationCenter.default.removeObserver(self)
+        return nil
+    }
+    
+    @objc func orientationChanged() {
+        switch UIApplication.shared.statusBarOrientation {
+        case .portrait:
+            eventSink!(0.0)
+        case .portraitUpsideDown:
+            eventSink!(180.0)
+        case .landscapeLeft:
+            eventSink!(-90.0)
+        case .landscapeRight:
+            eventSink!(90.0)
+        default:
+            eventSink!(0.0)
+        }
     }
 }
