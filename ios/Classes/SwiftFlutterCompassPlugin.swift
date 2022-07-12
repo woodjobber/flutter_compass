@@ -185,13 +185,14 @@ public class SwiftFlutterCompassPlugin: NSObject, FlutterPlugin, FlutterStreamHa
 
 extension CLLocation {
     var dms: String { latitudeDMS + " " + longitudeDMS }
+    // 纬度
     var latitudeCoordinateDirection: String {
         let (degrees, _, _) = coordinate.latitude.dms
         return degrees >= 0 ? "N" : "S"
     }
-
+    // 经度
     var longitudeCoordinateDirection: String {
-        let (degrees, _, _) = coordinate.latitude.dms
+        let (degrees, _, _) = coordinate.longitude.dms
         return degrees >= 0 ? "E" : "W"
     }
 
