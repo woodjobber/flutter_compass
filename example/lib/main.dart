@@ -22,6 +22,9 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _fetchPermissionStatus();
+    FlutterCompass.orientation?.listen((event) {
+      print(event);
+    });
   }
 
   @override

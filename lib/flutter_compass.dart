@@ -101,7 +101,10 @@ class FlutterCompass {
 
   static const EventChannel _compassChannel =
       const EventChannel('soer/flutter_compass');
+  static const EventChannel _orientationChannel =
+      const EventChannel('soer/screen_orientation');
   static Stream<CompassEvent>? _stream;
+  static Stream<double>? _orientationStream;
 
   /// Provides a [Stream] of compass events that can be listened to.
   static Stream<CompassEvent>? get events {
@@ -109,5 +112,12 @@ class FlutterCompass {
         .receiveBroadcastStream()
         .map((dynamic data) => CompassEvent.fromData(data));
     return _stream;
+  }
+
+  static Stream<double>? get orientation {
+    _orientationStream ??= _orientationChannel
+        .receiveBroadcastStream()
+        .map((event) => event as double);
+    return _orientationStream;
   }
 }

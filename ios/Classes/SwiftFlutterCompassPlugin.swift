@@ -239,8 +239,18 @@ class ScreenOrientationStreamHandler: NSObject, FlutterStreamHandler {
         return nil
     }
     
+    // 您的应用程序应允许纵向和横向工作以使用以下代码，否则结果会有所不同
     @objc func orientationChanged() {
-        switch UIApplication.shared.statusBarOrientation {
+        var interfaceOrientation: UIInterfaceOrientation
+        if #available(iOS 13.0, *) {
+            interfaceOrientation = UIApplication.shared.windows
+                .first?
+                .windowScene?
+                .interfaceOrientation ?? UIInterfaceOrientation.unknown
+        } else {
+            interfaceOrientation = UIApplication.shared.statusBarOrientation
+        }
+        switch interfaceOrientation {
         case .portrait:
             eventSink!(0.0)
         case .portraitUpsideDown:
